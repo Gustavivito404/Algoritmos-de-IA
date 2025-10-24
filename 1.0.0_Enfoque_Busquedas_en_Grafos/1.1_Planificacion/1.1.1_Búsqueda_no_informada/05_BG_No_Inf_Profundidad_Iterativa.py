@@ -1,5 +1,5 @@
 # =========================================================
-# 🔹 BÚSQUEDA EN PROFUNDIDAD ITERATIVA (IDS)
+# BÚSQUEDA EN PROFUNDIDAD ITERATIVA (IDS)
 # ---------------------------------------------------------
 # Descripción:
 #   Iterative Deepening Search = Búsqueda en profundidad
@@ -114,7 +114,9 @@ if __name__ == "__main__":
         'G': ['E', 'H'],
         'H': ['G']
     }
-
+    
+    # Puedes cambiar los nodos de inicio y meta aquí:
+    # start, goal = 'A', 'G'
     start, goal = 'A', 'H'
 
     # L_max es el límite máximo que vamos a intentar.
