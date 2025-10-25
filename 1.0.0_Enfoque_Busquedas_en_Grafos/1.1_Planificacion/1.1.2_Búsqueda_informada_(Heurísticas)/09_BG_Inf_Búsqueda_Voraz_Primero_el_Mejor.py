@@ -3,106 +3,96 @@
 #        (Greedy Best-First Search)
 # ---------------------------------------------------------
 # Descripción:
-#   Este algoritmo de búsqueda informada usa una heurística h(n)
-#   para decidir qué nodo expandir a continuación.
+#   Algoritmo de búsqueda INFORMADA.
 #
-#   Regla principal:
-#     Siempre expande el nodo con el valor heurístico h(n)
-#     más bajo (el que "parece" más cerca de la meta).
+#   Idea central:
+#     Siempre expande el nodo que tenga la heurística h(n)
+#     más baja, es decir, el que "parece" más cercano
+#     a la meta según la estimación.
 #
-#   Importante:
-#     - SOLO usa h(n). No toma en cuenta el costo recorrido.
-#     - Es rápida y suele ir directo hacia la meta.
-#     - PERO no garantiza el camino óptimo.
+#   Características:
+#     - Usa SOLO h(n). No le importa cuánto costó llegar.
+#     - Tiende a avanzar directo hacia la meta.
+#     - PERO no garantiza que el camino encontrado sea
+#       el más corto u óptimo.
 #
 #   En este ejemplo:
-#     • La meta es 'L'.
-#     • h(n) se define como la distancia Manhattan aproximada
-#       entre cada nodo y 'L', usando coordenadas en 2D que
-#       representan la posición visual del grafo.
+#     - Meta: 'F'
+#     - Heurística h(n): distancia Manhattan entre el nodo
+#       y la meta 'F', usando coordenadas (x,y) que
+#       representan la posición visual aproximada del grafo.
 #
-# Grafo usado:
+# Grafo usado (esquema lógico):
 #
-#              ┌───B──D────H
-#              │   │    \
-#              │   │     I
-#              │   │      \
-#              A   E──G──O──J
-#              │   │       │
-#              C── F──K────L
-#                \ │
-#                  M───N
+#       B ─ C
+#     /     |
+#   A ─ D   F   (meta)
+#       |   |
+#       E   I
+#       |   |                   
+#       G ─ H
+#
+#   Desde A puedes intentar subir (A→B→C→F)
+#   o bajar y rodear (A→D→E→G→H→I→F).
+#   Greedy elegirá en cada paso el nodo con h(n) más bajo.
 #
 # =========================================================
 
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple, Optional
 import heapq
 
 # ---------------------------------------------------------
-# Grafo oficial (no dirigido)
+# Grafo (no dirigido)
 # ---------------------------------------------------------
 graph: Dict[str, List[str]] = {
-    'A': ['B', 'C'],
-    'B': ['A', 'D', 'E'],
-    'C': ['A', 'F', 'M'],
-    'D': ['B', 'H', 'I'],
-    'H': ['D'],
-    'I': ['D', 'J', 'O'],   # I conecta a D, a J (directo) y a O
-    'E': ['B', 'F', 'G'],
-    'F': ['C', 'E', 'K', 'M'],
-    'G': ['E', 'O'],
-    'O': ['G', 'I', 'J'],   # nodo puente nuevo
-    'J': ['O', 'I', 'L'],
-    'K': ['F', 'L'],
-    'L': ['K', 'J'],
-    'M': ['C', 'F', 'N'],
-    'N': ['M']
+    'A': ['D', 'B'],
+    'B': ['A', 'C'],
+    'C': ['B', 'F'],
+    'D': ['A', 'E'],
+    'E': ['D', 'G'],
+    'F': ['C', 'I'],   # F es la meta
+    'G': ['E', 'H'],
+    'H': ['G', 'I'],
+    'I': ['H', 'F']
 }
 
 # ---------------------------------------------------------
-# Coordenadas oficiales (x, y) de cada nodo
-# Estas coordenadas reflejan tu layout visual.
+# Coordenadas (x,y) aproximadas de cada nodo
+# Estas posiciones reflejan el diagrama visual.
+#
+# Importante:
+#   F está en (2,1), y la heurística mide la "distancia"
+#   hasta F en el plano.
 # ---------------------------------------------------------
 coords: Dict[str, Tuple[int, int]] = {
-    'A': (0, 2),
+    'A': (0, 1),
     'B': (1, 0),
-    'D': (2, 0),
-    'H': (4, 0),
-    'I': (3, 1),
+    'C': (2, 0),
+    'F': (2, 1),  # Meta
+    'D': (1, 1),
+    'I': (2, 2),
     'E': (1, 2),
-    'G': (2, 2),
-    'O': (3, 2),
-    'J': (4, 2),
-    'C': (0, 3),
-    'F': (1, 3),
-    'K': (2, 3),
-    'L': (4, 3),
-    'M': (1, 4),
-    'N': (2, 4)
+    'H': (2, 3),
+    'G': (1, 3)
 }
 
-# ---------------------------------------------------------
-# Heurística h(n) = Distancia Manhattan hasta 'L'
-#
-#   h(n) = |x_n - x_L| + |y_n - y_L|
-#
-# Esta h(n) intenta estimar qué tan "cerca" está un nodo
-# de la meta 'L', sin calcular el camino real.
-#
-# Nota:
-#   Esto es una heurística informada, NO un costo real.
-#   Greedy va a usar estos valores para priorizar nodos.
-# ---------------------------------------------------------
-META = 'L'
+META = 'F'
 
+# ---------------------------------------------------------
+# Heurística h(n): Distancia Manhattan hasta F
+#
+#   h(n) = |x_n - x_F| + |y_n - y_F|
+#
+# Esta h(n) NO es el costo real: es una estimación de
+# qué tan cerca "parece" estar el nodo de la meta.
+# ---------------------------------------------------------
 def h(nodo: str) -> float:
     (x1, y1) = coords[nodo]
     (x2, y2) = coords[META]
     return abs(x1 - x2) + abs(y1 - y2)
 
-
 # ---------------------------------------------------------
-# Búsqueda Voraz Primero el Mejor (Greedy Best-First Search)
+# Algoritmo Greedy Best-First Search
 # ---------------------------------------------------------
 def greedy_best_first_search(
     graph: Dict[str, List[str]],
@@ -112,14 +102,14 @@ def greedy_best_first_search(
     """
     Implementación tipo GRAPH-SEARCH:
       - Usa una cola de prioridad ordenada por h(n).
-      - Mantiene 'visitados' para evitar ciclos.
-      - Usa 'parent' para reconstruir el camino al final.
+      - Lleva 'visitados' para no ciclar.
+      - Usa 'parent' para reconstruir el camino.
 
-    Esta versión imprime trazas paso a paso:
+    Imprime paso a paso:
       Paso | Nodo actual | h(n) | Frontera | Visitados
     """
 
-    # Cola de prioridad con tuplas (h(nodo), nodo)
+    # Cola de prioridad (min-heap) con tuplas (h(nodo), nodo)
     frontera: List[Tuple[float, str]] = []
     heapq.heappush(frontera, (h(start), start))
 
@@ -127,29 +117,28 @@ def greedy_best_first_search(
     parent: Dict[str, Optional[str]] = {start: None}
 
     paso = 0
-    print("\n====================================================")
+    print("====================================================")
     print(f"Greedy Best-First Search: inicio '{start}' → meta '{goal}'")
     print("====================================================")
-    print(f"{'Paso':<5} {'Nodo actual':<12} {'h(n)':<6} {'Frontera (h,node)':<40} {'Visitados'}")
-    print("─" * 120)
+    print(f"{'Paso':<5} {'Nodo actual':<12} {'h(n)':<6} {'Frontera (h,node)':<35} {'Visitados'}")
+    print("─" * 110)
 
     while frontera:
         # Sacar el nodo más prometedor según h(n)
         heur_actual, actual = heapq.heappop(frontera)
         paso += 1
 
-        print(f"{paso:<5} {actual:<12} {heur_actual:<6.1f} {str(frontera):<40} {sorted(list(visitados))}")
+        print(f"{paso:<5} {actual:<12} {heur_actual:<6.1f} {str(frontera):<35} {sorted(list(visitados))}")
 
-        # Puede pasar que el mismo nodo entró varias veces a la frontera
-        # con el mismo padre. Si ya lo cerramos, lo saltamos.
+        # Evitar reprocesar nodos ya visitados
         if actual in visitados:
             continue
 
         visitados.add(actual)
 
-        # ¿Llegamos a la meta?
+        # ¿Meta alcanzada?
         if actual == goal:
-            # reconstruir el camino
+            # reconstrucción del camino usando 'parent'
             camino = []
             nodo = actual
             while nodo is not None:
@@ -159,28 +148,25 @@ def greedy_best_first_search(
             print("\n✅ Meta alcanzada (Greedy)\n")
             return camino
 
-        # Expandir vecinos
+        # Expandimos vecinos
         for vecino in graph.get(actual, []):
             if vecino not in visitados:
-                # A Greedy no le importa g(n), solo h(n)
                 heapq.heappush(frontera, (h(vecino), vecino))
-                # Guardamos el padre la primera vez que lo vemos
+                # Registrar el padre sólo la primera vez
                 if vecino not in parent:
                     parent[vecino] = actual
 
     print("\n❌ No se encontró la meta\n")
     return None
 
-
 # ---------------------------------------------------------
-# Ejecución de pruebas
+# Ejecución del ejemplo principal:
+#   Inicio = 'A'
+#   Meta   = 'F'
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    # Vamos a probar varios puntos de inicio
-    pruebas_inicio = ['A', 'H', 'M']
-    meta = 'L'
+    inicio = 'A'
+    meta = 'F'
 
-    for inicio in pruebas_inicio:
-        camino = greedy_best_first_search(graph, inicio, meta)
-        print(f"Camino sugerido por Greedy desde {inicio} hasta {meta}: {camino}")
-        print("----------------------------------------------------")
+    camino = greedy_best_first_search(graph, inicio, meta)
+    print(f"Camino sugerido por Greedy de {inicio} a {meta}: {camino}")

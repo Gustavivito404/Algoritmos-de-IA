@@ -258,3 +258,17 @@ if __name__ == "__main__":
     print("Población final:", poblacion_final)
     print("Mejor individuo:", mejor)
     print("Fitness:", fit)
+
+# -----------------------------------------------------
+# Resumen y observaciones finales
+# -----------------------------------------------------
+# Población final: imprime la última generación de nodos.
+# Mejor individuo: el nodo más cercano a 'L' (mayor fitness).
+# Fitness: valor numérico que representa qué tan bueno es.
+#
+# Nota:
+# Los Algoritmos Genéticos no garantizan encontrar la meta,
+# pero evolucionan soluciones más prometedoras con el tiempo.
+# Cuanto más grande sea la población y las generaciones,
+# más probable es acercarse al óptimo global.
+# -----------------------------------------------------
